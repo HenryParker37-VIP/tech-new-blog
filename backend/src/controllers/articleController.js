@@ -60,6 +60,33 @@ exports.getArticleBySlug = async (req, res) => {
   }
 };
 
+// GET /api/articles/:slug/related
+exports.getRelatedArticles = async (req, res) => {
+  try {
+    const article = await Article.findOne({
+      slug: req.params.slug,
+      is_published: true,
+    });
+
+    if (!article) {
+      return res.status(404).json({ error: 'Article not found' });
+    }
+
+    const related = await Article.find({
+      _id: { $ne: article._id },
+      is_published: true,
+      category: article.category,
+    })
+      .sort({ published_at: -1 })
+      .limit(3)
+      .select('title slug image source category published_at views description');
+
+    res.json(related);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 // GET /api/articles/categories/stats
 exports.getCategoryStats = async (req, res) => {
   try {

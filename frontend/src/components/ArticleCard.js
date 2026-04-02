@@ -19,6 +19,17 @@ const CATEGORY_COLORS = {
   startups: 'bg-amber-100 text-amber-800',
 };
 
+const CATEGORY_PLACEHOLDERS = {
+  ai: 'https://images.unsplash.com/photo-1677442135703-1787eea5ce01?w=600&h=338&fit=crop',
+  web: 'https://images.unsplash.com/photo-1547658719-da2b51169166?w=600&h=338&fit=crop',
+  mobile: 'https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=600&h=338&fit=crop',
+  devops: 'https://images.unsplash.com/photo-1667372393119-3d4c48d07fc9?w=600&h=338&fit=crop',
+  security: 'https://images.unsplash.com/photo-1555949963-ff9fe0c870eb?w=600&h=338&fit=crop',
+  programming: 'https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=600&h=338&fit=crop',
+  startups: 'https://images.unsplash.com/photo-1559136555-9303baea8ebd?w=600&h=338&fit=crop',
+  general: 'https://images.unsplash.com/photo-1504711434969-e33886168d5c?w=600&h=338&fit=crop',
+};
+
 function ArticleCard({ article }) {
   const timeAgo = (date) => {
     const seconds = Math.floor((new Date() - new Date(date)) / 1000);
@@ -27,17 +38,28 @@ function ArticleCard({ article }) {
     return `${Math.floor(seconds / 86400)}d ago`;
   };
 
+  const thumbnailSrc = article.image || CATEGORY_PLACEHOLDERS[article.category] || CATEGORY_PLACEHOLDERS.general;
+  const fallbackSrc = CATEGORY_PLACEHOLDERS[article.category] || CATEGORY_PLACEHOLDERS.general;
+
   return (
-    <article className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
-      {article.image && (
+    <article className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow flex flex-col h-full">
+      {/* Thumbnail - 16:9 aspect ratio */}
+      <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
         <img
-          src={article.image}
+          src={thumbnailSrc}
           alt={article.title}
-          className="w-full h-48 object-cover"
-          onError={(e) => { e.target.style.display = 'none'; }}
+          className="absolute inset-0 w-full h-full object-cover"
+          loading="lazy"
+          onError={(e) => {
+            if (e.target.src !== fallbackSrc) {
+              e.target.src = fallbackSrc;
+            }
+          }}
         />
-      )}
-      <div className="p-5">
+      </div>
+
+      <div className="p-5 flex flex-col flex-1">
+        {/* Badges and time */}
         <div className="flex items-center gap-2 mb-3">
           <span className={`text-xs font-medium px-2 py-1 rounded-full ${SOURCE_COLORS[article.source] || 'bg-gray-100 text-gray-800'}`}>
             {article.source}
@@ -49,15 +71,37 @@ function ArticleCard({ article }) {
             {timeAgo(article.published_at)}
           </span>
         </div>
+
+        {/* Title - exactly 2 lines */}
         <Link to={`/article/${article.slug}`}>
-          <h2 className="text-lg font-semibold text-gray-900 hover:text-indigo-600 mb-2 line-clamp-2">
+          <h2 className="text-lg font-semibold text-gray-900 hover:text-indigo-600 mb-2 transition-colors"
+              style={{
+                display: '-webkit-box',
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: 'vertical',
+                overflow: 'hidden',
+                lineHeight: '1.5em',
+                minHeight: '3em',
+              }}>
             {article.title}
           </h2>
         </Link>
-        <p className="text-sm text-gray-600 line-clamp-3">
+
+        {/* Description - exactly 3 lines */}
+        <p className="text-sm text-gray-600"
+           style={{
+             display: '-webkit-box',
+             WebkitLineClamp: 3,
+             WebkitBoxOrient: 'vertical',
+             overflow: 'hidden',
+             lineHeight: '1.5em',
+             minHeight: '4.5em',
+           }}>
           {article.description}
         </p>
-        <div className="mt-4 flex items-center justify-between">
+
+        {/* Footer - always pinned to bottom */}
+        <div className="mt-auto pt-4 flex items-center justify-between">
           <Link
             to={`/article/${article.slug}`}
             className="text-sm font-medium text-indigo-600 hover:text-indigo-800"

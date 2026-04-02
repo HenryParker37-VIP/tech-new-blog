@@ -1,4 +1,5 @@
 const { categorizeArticle } = require('../utils/categorize');
+const { fetchOgImage } = require('../utils/fetchOgImage');
 const slugify = require('slugify');
 
 const HN_TOP_STORIES = 'https://hacker-news.firebaseio.com/v0/topstories.json';
@@ -29,13 +30,19 @@ async function scrapeHackerNews(limit = 15) {
       const title = story.title;
       const link = story.url || `https://news.ycombinator.com/item?id=${story.id}`;
 
+      // Try to fetch OG image from the original URL
+      let image = '';
+      if (story.url) {
+        image = await fetchOgImage(story.url);
+      }
+
       articles.push({
         title,
         description: `${story.score} points | ${story.descendants || 0} comments on Hacker News`,
         content: '',
         link,
         source: 'hackernews',
-        image: '',
+        image,
         category: categorizeArticle(title),
         slug: slugify(title, { lower: true, strict: true }).slice(0, 100),
         scraped_at: new Date(),

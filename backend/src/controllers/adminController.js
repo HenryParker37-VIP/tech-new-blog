@@ -7,11 +7,13 @@ exports.getAllArticles = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 20;
-    const status = req.query.status; // 'published', 'unpublished', or undefined for all
+    const status = req.query.status;
+    const category = req.query.category;
 
     const filter = {};
     if (status === 'published') filter.is_published = true;
     if (status === 'unpublished') filter.is_published = false;
+    if (category && category !== 'all') filter.category = category;
 
     const total = await Article.countDocuments(filter);
     const articles = await Article.find(filter)
@@ -90,6 +92,17 @@ exports.getStats = async (req, res) => {
       { $group: { _id: null, total: { $sum: '$views' } } },
     ]);
 
+    // Articles scraped today
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const articlesToday = await Article.countDocuments({
+      scraped_at: { $gte: todayStart },
+    });
+
+    // Distinct sources count
+    const sources = await Article.distinct('source');
+    const sourcesCount = sources.length;
+
     const sourceStats = await Article.aggregate([
       { $group: { _id: '$source', count: { $sum: 1 } } },
       { $sort: { count: -1 } },
@@ -104,6 +117,8 @@ exports.getStats = async (req, res) => {
       publishedArticles,
       unpublishedArticles: totalArticles - publishedArticles,
       totalViews: totalViews[0]?.total || 0,
+      articlesToday,
+      sourcesCount,
       sourceStats,
       recentLogs,
     });
