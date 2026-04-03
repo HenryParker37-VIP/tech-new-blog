@@ -27,6 +27,23 @@ function estimateReadTime(text) {
   return Math.max(1, Math.ceil(words / 200));
 }
 
+function RelatedImage({ item }) {
+  const [failed, setFailed] = React.useState(false);
+  const fallback = CATEGORY_PLACEHOLDERS[item.category] || CATEGORY_PLACEHOLDERS.general;
+  const src = (!failed && item.image) ? item.image : fallback;
+
+  return (
+    <img
+      src={src}
+      alt=""
+      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+      loading="lazy"
+      referrerPolicy="no-referrer"
+      onError={() => { if (!failed) setFailed(true); }}
+    />
+  );
+}
+
 function ArticlePage() {
   const { slug } = useParams();
   const { data: article, loading, error } = useApi(`/articles/${slug}`);
@@ -105,11 +122,12 @@ function ArticlePage() {
 
       <article>
         {/* Cover Image */}
-        <div className="relative w-full h-64 md:h-96 rounded-xl overflow-hidden mb-8 bg-gray-100">
+        <div className="relative w-full h-64 md:h-96 rounded-xl overflow-hidden mb-8 bg-gray-200">
           <img
             src={coverImage}
-            alt={article.title}
+            alt=""
             className="w-full h-full object-cover"
+            referrerPolicy="no-referrer"
             onError={() => setImgError(true)}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
@@ -236,16 +254,8 @@ function ArticlePage() {
                 to={`/article/${item.slug}`}
                 className="group bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow"
               >
-                <div className="h-40 bg-gray-100 overflow-hidden">
-                  <img
-                    src={item.image || CATEGORY_PLACEHOLDERS[item.category] || CATEGORY_PLACEHOLDERS.general}
-                    alt={item.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    loading="lazy"
-                    onError={(e) => {
-                      e.target.src = CATEGORY_PLACEHOLDERS[item.category] || CATEGORY_PLACEHOLDERS.general;
-                    }}
-                  />
+                <div className="h-40 bg-gray-200 overflow-hidden">
+                  <RelatedImage item={item} />
                 </div>
                 <div className="p-4">
                   <span className="text-xs font-medium text-indigo-600 capitalize">{item.category}</span>

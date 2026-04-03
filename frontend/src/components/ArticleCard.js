@@ -31,6 +31,8 @@ const CATEGORY_PLACEHOLDERS = {
 };
 
 function ArticleCard({ article }) {
+  const [imgFailed, setImgFailed] = React.useState(false);
+
   const timeAgo = (date) => {
     const seconds = Math.floor((new Date() - new Date(date)) / 1000);
     if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
@@ -38,22 +40,21 @@ function ArticleCard({ article }) {
     return `${Math.floor(seconds / 86400)}d ago`;
   };
 
-  const thumbnailSrc = article.image || CATEGORY_PLACEHOLDERS[article.category] || CATEGORY_PLACEHOLDERS.general;
   const fallbackSrc = CATEGORY_PLACEHOLDERS[article.category] || CATEGORY_PLACEHOLDERS.general;
+  const thumbnailSrc = (!imgFailed && article.image) ? article.image : fallbackSrc;
 
   return (
     <article className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow flex flex-col h-full">
       {/* Thumbnail - 16:9 aspect ratio */}
-      <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
+      <div className="relative w-full bg-gray-200" style={{ paddingBottom: '56.25%' }}>
         <img
           src={thumbnailSrc}
-          alt={article.title}
+          alt=""
           className="absolute inset-0 w-full h-full object-cover"
           loading="lazy"
-          onError={(e) => {
-            if (e.target.src !== fallbackSrc) {
-              e.target.src = fallbackSrc;
-            }
+          referrerPolicy="no-referrer"
+          onError={() => {
+            if (!imgFailed) setImgFailed(true);
           }}
         />
       </div>
